@@ -1,3 +1,8 @@
+const COR_TABULEIRO_CLARA = 0xdddddd;
+const COR_TABULEIRO_ESCURA = 0x333333;
+const COR_PECA_VERMELHA = 0xff4444;
+const COR_PECA_AZUL = 0x4444ff;
+
 let cena, camera, renderizador;
 let tamanhoTabuleiro = 10; // Aumentar tamanho do tabuleiro para 10x10
 let tamanhoQuadrado = 1;
@@ -21,10 +26,19 @@ function iniciar() {
     renderizador.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderizador.domElement);
 
-    // Criar tabuleiro
+    criarTabuleiro();
+    criarPecas();
+
+    window.addEventListener('resize', aoRedimensionarJanela, false);
+    window.addEventListener('click', aoClicar, false);
+
+    atualizarIndicadorDeTurno();
+}
+
+function criarTabuleiro() {
     for (let i = 0; i < tamanhoTabuleiro; i++) {
         for (let j = 0; j < tamanhoTabuleiro; j++) {
-            let cor = (i + j) % 2 === 0 ? 0xdddddd : 0x333333; // Melhorar as cores do tabuleiro
+            let cor = (i + j) % 2 === 0 ? COR_TABULEIRO_CLARA : COR_TABULEIRO_ESCURA;
             let quadrado = new THREE.Mesh(
                 new THREE.PlaneGeometry(tamanhoQuadrado, tamanhoQuadrado),
                 new THREE.MeshBasicMaterial({ color: cor })
@@ -34,12 +48,13 @@ function iniciar() {
             cena.add(quadrado);
         }
     }
+}
 
-    // Criar peças
+function criarPecas() {
     for (let i = 0; i < tamanhoTabuleiro; i++) {
         for (let j = 0; j < tamanhoTabuleiro; j++) {
-            if ((i + j) % 2 !== 0 && (j < 4 || j > 5)) { // Ajustar para o novo tamanho do tabuleiro
-                let cor = j < 4 ? 0xff4444 : 0x4444ff; // Melhorar as cores das peças
+            if ((i + j) % 2 !== 0 && (j < 4 || j > 5)) {
+                let cor = j < 4 ? COR_PECA_VERMELHA : COR_PECA_AZUL;
                 let peca = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.4, 0.4, 0.2, 32),
                     new THREE.MeshBasicMaterial({ color: cor })
@@ -50,11 +65,6 @@ function iniciar() {
             }
         }
     }
-
-    window.addEventListener('resize', aoRedimensionarJanela, false);
-    window.addEventListener('click', aoClicar, false);
-
-    atualizarIndicadorDeTurno();
 }
 
 function aoRedimensionarJanela() {
@@ -86,7 +96,7 @@ function aoClicar(evento) {
                     lidarComMovimento(x, z);
                 } else {
                     // Selecionar peça do jogador 1
-                    pecaSelecionada = pecas.find(peca => peca.x === x && peca.y === z && peca.cor === 0xff4444);
+                    pecaSelecionada = pecas.find(peca => peca.x === x && peca.y === z && peca.cor === COR_PECA_VERMELHA);
                     if (pecaSelecionada) {
                         mostrarIndicadoresDeMovimento(pecaSelecionada);
                     } else {
@@ -116,7 +126,7 @@ function lidarComMovimento(x, z) {
 function mostrarIndicadoresDeMovimento(peca) {
     limparIndicadoresDeMovimento();
 
-    let direcao = peca.rei ? 1 : (peca.cor === 0xff4444 ? 1 : -1); // Rei pode mover em ambas as direções
+    let direcao = peca.rei ? 1 : (peca.cor === COR_PECA_VERMELHA ? 1 : -1); // Rei pode mover em ambas as direções
 
     // Movimentos simples
     let movimentosPossiveis = [
@@ -188,7 +198,7 @@ function limparIndicadoresDeMovimento() {
 
 function jogadaComputador() {
     // Filtrar peças do computador (Jogador 2 - azul)
-    let pecasComputador = pecas.filter(peca => peca.cor === 0x4444ff);
+    let pecasComputador = pecas.filter(peca => peca.cor === COR_PECA_AZUL);
     let melhorMovimento = null;
 
     // Priorizar capturas
@@ -199,7 +209,7 @@ function jogadaComputador() {
             let capturaX = (peca.x + x) / 2;
             let capturaZ = (peca.y + z) / 2;
             if (x >= 0 && x < tamanhoTabuleiro && z >= 0 && z < tamanhoTabuleiro) {
-                let pecaCapturada = pecas.find(p => p.x === capturaX && p.y === capturaZ && p.cor === 0xff4444);
+                let pecaCapturada = pecas.find(p => p.x === capturaX && p.y === capturaZ && p.cor === COR_PECA_VERMELHA);
                 if (pecaCapturada && movimentoValido(peca, { x: x, y: z }, true)) {
                     melhorMovimento = { peca, alvoX: x, alvoZ: z, pecaCapturada };
                     break;
@@ -273,7 +283,7 @@ function podeCapturar(peca) {
         ];
     } else {
         // Peças normais só podem capturar para frente (vermelhas) ou para trás (azuis)
-        let direcao = peca.cor === 0xff4444 ? 2 : -2;
+        let direcao = peca.cor === COR_PECA_VERMELHA ? 2 : -2;
         direcoes = [
             { dx: -2, dy: direcao },
             { dx: 2, dy: direcao }
@@ -353,7 +363,7 @@ function moverPeca(peca, posicaoAlvo, eCaptura) {
     }, 500);
 }
 function promoverPecaSeNecessario(peca) {
-    if ((peca.cor === 0xff4444 && peca.y === tamanhoTabuleiro - 1) || (peca.cor === 0x4444ff && peca.y === 0)) {
+    if ((peca.cor === COR_PECA_VERMELHA && peca.y === tamanhoTabuleiro - 1) || (peca.cor === COR_PECA_AZUL && peca.y === 0)) {
         peca.rei = true;
         peca.mesh.material.color.setHex(0xffff00); // Mudar a cor para indicar promoção
     }
@@ -395,7 +405,7 @@ function movimentoValido(peca, posicaoAlvo, eCaptura) {
                 if (peca.rei) {
                     return true; // Damas podem mover-se em ambas as direções
                 } else {
-                    let direcao = peca.cor === 0xff4444 ? 1 : -1;
+                    let direcao = peca.cor === COR_PECA_VERMELHA ? 1 : -1;
                     return dy === direcao;
                 }
             }
@@ -405,8 +415,8 @@ function movimentoValido(peca, posicaoAlvo, eCaptura) {
 }
 
 function verificarVencedor() {
-    let pecasJogador1 = pecas.filter(p => p.cor === 0xff4444);
-    let pecasJogador2 = pecas.filter(p => p.cor === 0x4444ff);
+    let pecasJogador1 = pecas.filter(p => p.cor === COR_PECA_VERMELHA);
+    let pecasJogador2 = pecas.filter(p => p.cor === COR_PECA_AZUL);
 
     if (pecasJogador1.length === 0) {
         alert('Jogador 2 venceu!');
@@ -433,20 +443,7 @@ function reiniciarJogo() {
     document.getElementById('placarJogador2').innerText = placares[2];
 
     // Recriar as peças iniciais
-    for (let i = 0; i < tamanhoTabuleiro; i++) {
-        for (let j = 0; j < tamanhoTabuleiro; j++) {
-            if ((i + j) % 2 !== 0 && (j < 4 || j > 5)) {
-                let cor = j < 4 ? 0xff4444 : 0x4444ff;
-                let peca = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.4, 0.4, 0.2, 32),
-                    new THREE.MeshBasicMaterial({ color: cor })
-                );
-                peca.position.set(i, 0.1, j);
-                cena.add(peca);
-                pecas.push({ mesh: peca, x: i, y: j, cor: cor, rei: false });
-            }
-        }
-    }
+    criarPecas();
 
     // Atualizar o indicador de turno
     atualizarIndicadorDeTurno();
