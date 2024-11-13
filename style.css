@@ -1,0 +1,19 @@
+body { margin: 0; }
+canvas { display: block; }
+#placar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+#labelJogador1 {
+    color: #ff4444; /* Vermelho */
+}
+#labelJogador2 {
+    color: #4444ff; /* Azul */
+}
+.ativo {
+    font-weight: bold;
+    text-decoration: underline;
+}
